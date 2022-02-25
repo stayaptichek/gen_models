@@ -9,20 +9,23 @@ from torchvision import transforms
 import re
 import numpy as np
 import torch
-from random import randint
-
 
 CUR_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 ## Create a custom Dataset class
 class CelebADataset(Dataset):
-    def __init__(self, root_dir=os.path.join(CUR_DIR, '../../data/celeba'), transform=None):
+    def __init__(
+        self, root_dir=os.path.join(CUR_DIR, 'data/celeba'), 
+        attr_file_path='list_attr_celeba.txt', 
+        transform=None, 
+        crop=True):
         """
         Args:
           root_dir (string): Directory with all the images
           transform (callable, optional): transform to be applied to each image sample
         """
+        self.crop = crop
         # Read names of images in the root directory
         
         # Path to folder with the dataset
@@ -30,16 +33,17 @@ class CelebADataset(Dataset):
             os.makedirs(root_dir)
         dataset_folder = f'{root_dir}/img_align_celeba/'
         self.dataset_folder = os.path.abspath(dataset_folder)
-        if not os.path.isdir(dataset_folder):
-            # URL for the CelebA dataset
-            download_url = 'https://drive.google.com/uc?id=1cNIac61PSA_LqDFYFUeyaQYekYPc75NH'
-            # Path to download the dataset to
+        if crop:
+            download_path = f'{root_dir}/img_align_celeba_crop.zip'
+        else:
             download_path = f'{root_dir}/img_align_celeba.zip'
-            # Download the dataset from google drive
-            gdown.download(download_url, download_path, quiet=False)
-
-#             os.makedirs(dataset_folder)
-
+        if not os.path.isfile(download_path):
+            if crop:
+                download_url = 'https://drive.google.com/file/d/12agH1nWYcj7PAoErxQQgFdOAohgS9qE_/view?usp=sharing'
+                gdown.download(download_url, download_path, quiet=False, fuzzy=True)
+            else:
+                download_url = 'https://drive.google.com/uc?id=1cNIac61PSA_LqDFYFUeyaQYekYPc75NH'
+                gdown.download(download_url, download_path, quiet=False)
             # Unzip the downloaded file 
             with zipfile.ZipFile(download_path, 'r') as ziphandler:
                 ziphandler.extractall(root_dir)
@@ -51,7 +55,7 @@ class CelebADataset(Dataset):
         
         self.filenames = []
         self.annotations = []
-        with open(f'{root_dir}/list_attr_celeba.txt') as f:
+        with open(attr_file_path) as f:
             for i, line in enumerate(f.readlines()):
                 line = re.sub(' *\n', '', line)
                 if i == 0:
@@ -65,7 +69,10 @@ class CelebADataset(Dataset):
         self.annotations = np.array(self.annotations)    
               
     def __len__(self): 
-        return len(self.filenames)
+        if self.crop:
+            return 500
+        else:
+            return len(self.filenames)
 
     def __getitem__(self, idx):
         # Get the path to the image 
