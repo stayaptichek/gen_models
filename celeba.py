@@ -95,8 +95,6 @@ class CelebaCustomDataset(CelebADataset):
         target = target['attributes'] == 1
         new_target = target[indices]
         new_target = new_target.to(image.dtype)
-        if sum(new_target) == 0:
-            return self.__getitem__(np.random.randint(0, len(self)))
         return image, new_target
 
     
