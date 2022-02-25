@@ -9,7 +9,6 @@ from torchvision import transforms
 import re
 import numpy as np
 import torch
-from random import randint
 
 
 CUR_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -97,7 +96,7 @@ class CelebaCustomDataset(CelebADataset):
         new_target = target[indices]
         new_target = new_target.to(image.dtype)
         if sum(new_target) == 0:
-            return self.__getitem__(randint(0, len(self)))
+            return self.__getitem__(np.random.randint(0, len(self)))
         return image, new_target
 
     
