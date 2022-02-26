@@ -9,13 +9,15 @@ from torchvision import transforms
 import re
 import numpy as np
 import torch
+from random import randint
+
 
 
 CUR_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-## Create a custom Dataset class
-class CelebADataset(Dataset):
+
+class CelebaCustomDataset(Dataset):
     def __init__(
         self, root_dir=os.path.join(CUR_DIR, 'data/celeba'), 
         attr_file_path='list_attr_celeba.txt', 
@@ -74,9 +76,8 @@ class CelebADataset(Dataset):
             return 500
         else:
             return len(self.filenames)
-
+        
     def __getitem__(self, idx):
-        # Get the path to the image 
         img_name = self.filenames[idx]
         img_path = os.path.join(self.dataset_folder, img_name)
         img_attributes = self.annotations[idx] # convert all attributes to zeros and ones
@@ -85,11 +86,14 @@ class CelebADataset(Dataset):
         # Apply transformations to the image
         if self.transform:
             img = self.transform(img)
-        return img, {'filename': img_name, 'idx': idx, 'attributes': torch.tensor(img_attributes).long()}
+        target = {'filename': img_name, 'idx': idx, 'attributes': torch.tensor(img_attributes).long()}
 
-
-class CelebaCustomDataset(CelebADataset):
-    def __getitem__(self, idx):
-        return idx
+        indices = [8, 9, 11, 15, 16, 20, 22, 28, 35, 39]
+        target = target['attributes'] == 1
+        new_target = target[indices]
+        new_target = new_target.to(img.dtype)
+        if sum(new_target) == 0:
+            return self.__getitem__(randint(0, len(self)))
+        return img, new_target
 
     
